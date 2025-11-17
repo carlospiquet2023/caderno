@@ -1,11 +1,32 @@
-const CACHE_NAME = 'caderno-digital-v1';
-const urlsToCache = [
+/**
+ * Service Worker - Advanced PWA Implementation
+ * Version: 2.0.0
+ * @description Enhanced service worker with advanced caching strategies
+ */
+
+const VERSION = '2.0.0';
+const CACHE_PREFIX = 'caderno-digital';
+const CACHE_STATIC = `${CACHE_PREFIX}-static-v${VERSION}`;
+const CACHE_DYNAMIC = `${CACHE_PREFIX}-dynamic-v${VERSION}`;
+const CACHE_IMAGES = `${CACHE_PREFIX}-images-v${VERSION}`;
+const CACHE_FONTS = `${CACHE_PREFIX}-fonts-v${VERSION}`;
+
+// Static assets to cache on install
+const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './favicon.ico',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png'
+];
+
+// CDN resources
+const CDN_RESOURCES = [
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  'https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&family=Dancing+Script:wght@500&family=Caveat&display=swap'
+  'https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&family=Dancing+Script:wght@500&family=Caveat&family=Inter:wght@400;500;600;700&display=swap'
 ];
 
 // Instalação do Service Worker

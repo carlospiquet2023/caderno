@@ -1,0 +1,80 @@
+{
+  "name": "caderno-digital-ia",
+  "version": "2.0.0",
+  "description": "Caderno Digital com IA - Sistema de anotações inteligente com reconhecimento de voz e continuação de texto por IA",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint js/**/*.js",
+    "lint:fix": "eslint js/**/*.js --fix",
+    "format": "prettier --write \"**/*.{js,html,css,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,html,css,json,md}\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "docs": "jsdoc -c jsdoc.json -r js/",
+    "analyze": "source-map-explorer dist/**/*.js",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlospiquet2023/caderno.git"
+  },
+  "keywords": [
+    "notebook",
+    "ai",
+    "voice-recognition",
+    "pwa",
+    "gemini",
+    "notes",
+    "education",
+    "productivity"
+  ],
+  "author": {
+    "name": "Carlos Antonio de Oliveira Piquet",
+    "email": "carlospiquet.projetos@gmail.com",
+    "url": "https://github.com/carlospiquet2023"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/carlospiquet2023/caderno/issues"
+  },
+  "homepage": "https://carlospiquet2023.github.io/caderno/",
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "eslint": "^8.50.0",
+    "husky": "^8.0.3",
+    "jest": "^29.7.0",
+    "jsdoc": "^4.0.2",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.3",
+    "source-map-explorer": "^2.5.3",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "html2pdf.js": "^0.10.1"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{html,css,json,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "> 1%",
+    "not dead",
+    "not ie 11"
+  ]
+}
