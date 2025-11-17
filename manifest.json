@@ -2,7 +2,7 @@
   "name": "Caderno Digital com IA",
   "short_name": "Caderno IA",
   "description": "Caderno digital inteligente com continuação de textos via IA",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1f2937",
   "theme_color": "#4f46e5",
