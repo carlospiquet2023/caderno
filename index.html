@@ -75,7 +75,7 @@
             background: linear-gradient(to bottom, #fffef9 0%, #fffef2 100%);
             font-size: 1.25rem;
             line-height: 2.5rem;
-            padding: 5.5rem 2rem 2rem 4.5rem;
+            padding: 3rem 2rem 2rem 4.5rem;
             background-image:
                 linear-gradient(to right, transparent 4rem, #ef4444 4.1rem, transparent 4.2rem),
                 linear-gradient(to bottom, transparent 0px, #6366f1 2px, transparent 2px);
@@ -201,7 +201,7 @@
             #pagina-caderno {
                 font-size: 1.1rem;
                 line-height: 2.2rem;
-                padding: 4.5rem 1.5rem 1.5rem 3rem;
+                padding: 2.5rem 1.5rem 1.5rem 3rem;
                 background-image:
                     linear-gradient(to right, transparent 2.5rem, #ef4444 2.6rem, transparent 2.7rem),
                     linear-gradient(to bottom, transparent 0px, #6366f1 2px, transparent 2px);
@@ -1068,35 +1068,69 @@
         exportarPdfBtn.addEventListener('click', async () => {
             const originalText = exportarPdfBtn.innerHTML;
             exportarPdfBtn.disabled = true;
-            exportarPdfBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Gerando PDF...';
+            exportarPdfBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Gerando PDF completo...';
             
             try {
-                // Cria um container com cabeçalho e conteúdo
-                const container = document.createElement('div');
-                container.style.backgroundColor = '#fffde7';
-                container.style.padding = '20px';
+                // Salva página atual primeiro
+                gerenciador.salvarCadernoAtual();
                 
-                // Adiciona cabeçalho ao PDF
+                // Pega todos os cadernos
+                const cadernos = gerenciador.obterCadernos();
+                const caderno = cadernos[gerenciador.cadernoAtual];
+                
+                // Container principal para todas as páginas
+                const containerCompleto = document.createElement('div');
+                
+                // Cria uma página com cabeçalho e conteúdo
+                const pagina = document.createElement('div');
+                pagina.style.backgroundColor = '#fffef9';
+                pagina.style.padding = '40px';
+                pagina.style.pageBreakAfter = 'always';
+                pagina.style.minHeight = '100vh';
+                
+                // Cabeçalho
                 const cabecalho = document.createElement('div');
-                cabecalho.style.marginBottom = '20px';
-                cabecalho.style.paddingBottom = '10px';
-                cabecalho.style.borderBottom = '2px solid #a5b4fc';
+                cabecalho.style.marginBottom = '30px';
+                cabecalho.style.paddingBottom = '15px';
+                cabecalho.style.borderBottom = '2px solid #6366f1';
                 cabecalho.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                        <div><strong>Data:</strong> ${campoData.value ? new Date(campoData.value + 'T00:00:00').toLocaleDateString('pt-BR') : '_____________'}</div>
-                        <div><strong>Matéria:</strong> ${sanitizarTexto(campoMateria.value) || '_____________'}</div>
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;">
+                        <div>📅 Data: ${caderno.data ? new Date(caderno.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem data'}</div>
+                        <div>📚 Matéria: ${sanitizarTexto(caderno.materia) || 'Sem matéria'}</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px; font-size: 18px; color: #4f46e5;">
+                        <strong>${caderno.nome}</strong>
                     </div>
                 `;
-                container.appendChild(cabecalho);
+                pagina.appendChild(cabecalho);
                 
-                const elemento = paginaDoCaderno.cloneNode(true);
-                elemento.contentEditable = false;
-                container.appendChild(elemento);
+                // Conteúdo
+                const conteudo = document.createElement('div');
+                conteudo.innerHTML = caderno.conteudo;
+                conteudo.style.fontSize = '14px';
+                conteudo.style.lineHeight = '1.8';
+                conteudo.style.fontFamily = caderno.fonte.includes('kalam') ? 'Kalam, cursive' : 
+                                           caderno.fonte.includes('patrick') ? 'Patrick Hand, cursive' :
+                                           caderno.fonte.includes('dancing') ? 'Dancing Script, cursive' :
+                                           caderno.fonte.includes('caveat') ? 'Caveat, cursive' :
+                                           caderno.fonte.includes('times') ? 'Times New Roman, serif' : 'Arial, sans-serif';
+                pagina.appendChild(conteudo);
                 
-                // Nome do arquivo com data e matéria
-                const nomeMateria = campoMateria.value ? campoMateria.value.replace(/[^a-zA-Z0-9]/g, '_') : 'caderno';
-                const dataFormatada = campoData.value ? campoData.value : new Date().toISOString().split('T')[0];
-                const nomeArquivo = `${nomeMateria}_${dataFormatada}.pdf`;
+                // Rodapé
+                const rodape = document.createElement('div');
+                rodape.style.marginTop = '40px';
+                rodape.style.paddingTop = '15px';
+                rodape.style.borderTop = '1px solid #e5e7eb';
+                rodape.style.textAlign = 'center';
+                rodape.style.fontSize = '10px';
+                rodape.style.color = '#6b7280';
+                rodape.innerHTML = `Caderno Digital - Desenvolvido por Carlos Antonio de Oliveira Piquet`;
+                pagina.appendChild(rodape);
+                
+                containerCompleto.appendChild(pagina);
+                
+                // Nome do arquivo
+                const nomeArquivo = `${sanitizarTexto(caderno.nome).replace(/\s+/g, '_')}_completo.pdf`;
                 
                 const opt = {
                     margin: 0.5,
@@ -1106,7 +1140,7 @@
                     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
                 };
                 
-                await html2pdf().set(opt).from(container).save();
+                await html2pdf().set(opt).from(containerCompleto).save();
                 
                 // Som e efeito ao exportar
                 tocarSomPagina();
