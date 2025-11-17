@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="Caderno Digital com IA - Anote, organize e continue seus textos com inteligência artificial">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://generativelanguage.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data:; manifest-src 'self';">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>Caderno Digital com IA</title>
+    <!-- Carrega o Tailwind CSS para estilos rápidos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Biblioteca para exportar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Carrega fontes do Google que parecem escritas à mão -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&family=Dancing+Script:wght@500&family=Caveat&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --accent: #f59e0b;
+            --paper: #fffef9;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            transition: var(--transition);
+        }
+        
+        /* Define as fontes personalizadas */
+        .font-arial { font-family: Arial, sans-serif; }
+        .font-times { font-family: 'Times New Roman', serif; }
+        .font-kalam { font-family: 'Kalam', cursive; }
+        .font-patrick { font-family: 'Patrick Hand', cursive; }
+        .font-dancing { font-family: 'Dancing Script', cursive; }
+        .font-caveat { font-family: 'Caveat', cursive; }
+
+        /* Aparência do caderno */
+        #pagina-caderno {
+            background: linear-gradient(to bottom, #fffef9 0%, #fffef2 100%);
+            font-size: 1.25rem;
+            line-height: 2.5rem;
+            padding: 5.5rem 2rem 2rem 4.5rem;
+            background-image:
+                linear-gradient(to right, transparent 4rem, #ef4444 4.1rem, transparent 4.2rem),
+                linear-gradient(to bottom, transparent 0px, #6366f1 2px, transparent 2px);
+            background-size: 100% 100%, 100% 2.5rem;
+            background-position: 0 0, 0 2.5rem;
+            outline: none;
+            min-height: 100vh;
+            vertical-align: bottom;
+            box-shadow: inset 0 0 100px rgba(99, 102, 241, 0.03);
+        }
+        
+        /* Cabeçalho do caderno */
+        .cabecalho-caderno {
+            background: linear-gradient(to bottom, var(--paper), rgba(255, 254, 249, 0.95));
+            padding: 1.5rem 2rem 1rem 4.5rem;
+            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+            margin-bottom: 0;
+            position: relative;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Menu lateral do caderno */
+        .cabecalho-caderno::before {
+            content: '';
+            position: absolute;
+            left: 4rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #f87171;
+        }
+        
+        .campo-cabecalho {
+            border: none;
+            border-bottom: 2px solid #e5e7eb;
+            background: transparent;
+            outline: none;
+            font-size: 1.1rem;
+            padding: 0.5rem 0.75rem;
+            width: 100%;
+            max-width: 300px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            color: #1f2937;
+        }
+        
+        .campo-cabecalho:focus {
+            border-bottom-color: var(--primary);
+            box-shadow: 0 2px 0 0 var(--primary);
+            transform: translateY(-1px);
+        }
+        
+        /* Spinner de carregamento (SVG) */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Efeito 3D de virar página */
+        .book-container {
+            perspective: 2000px;
+            position: relative;
+            transition: transform 0.4s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 100px rgba(102, 126, 234, 0.2);
+            animation: fadeInUp 0.8s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .book-container:hover {
+            transform: translateY(-4px);
+        }
+
+        .page {
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1),
+                        box-shadow 0.4s ease;
+            transform-style: preserve-3d;
+            transform-origin: left center;
+        }
+
+        .page.flipping {
+            transform: rotateY(-180deg);
+            box-shadow: -5px 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Navegação de páginas */
+        .page-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        /* Estilo para impressão/PDF */
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            #pagina-caderno { 
+                min-height: 100vh;
+                page-break-inside: avoid;
+            }
+            .book-container { overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; }
+            .cabecalho-caderno { display: block !important; }
+        }
+        
+        /* Responsividade Mobile */
+        @media (max-width: 768px) {
+            #pagina-caderno {
+                font-size: 1.1rem;
+                line-height: 2.2rem;
+                padding: 4.5rem 1.5rem 1.5rem 3rem;
+                background-image:
+                    linear-gradient(to right, transparent 2.5rem, #ef4444 2.6rem, transparent 2.7rem),
+                    linear-gradient(to bottom, transparent 0px, #6366f1 2px, transparent 2px);
+                background-size: 100% 100%, 100% 2.2rem;
+                background-position: 0 0, 0 2.2rem;
+            }
+            
+            .cabecalho-caderno {
+                padding: 1.25rem 1.5rem 1rem 3rem;
+            }
+            
+            .campo-cabecalho {
+                font-size: 0.95rem;
+                max-width: 100%;
+            }
+            
+            .sidebar {
+                width: 280px;
+            }
+        }
+        
+        /* Touch friendly */
+        @media (hover: none) and (pointer: coarse) {
+            button, select {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+        
+        /* Menu Lateral */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15), inset -1px 0 0 rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-header {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Inter', sans-serif;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            animation: slideInLeft 0.6s ease;
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .sidebar-title {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            font-family: 'Inter', sans-serif;
+            padding-left: 0.25rem;
+            border-left: 3px solid rgba(255, 255, 255, 0.4);
+            padding-left: 0.75rem;
+        }
+        
+        .sidebar-btn {
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 0.625rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            font-size: 0.95rem;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .sidebar-btn:hover::before {
+            left: 100%;
+        }
+        
+        .sidebar-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateX(8px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .sidebar-btn:active {
+            transform: translateX(6px) scale(0.98);
+        }
+        
+        .sidebar-btn.active {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            color: #667eea;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border-color: white;
+        }
+        
+        .sidebar-select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            color: #1f2937;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-select:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .sidebar-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        
+        .sidebar-select option {
+            color: #1f2937;
+            background: white;
+            padding: 0.5rem;
+        }
+        
+        .toggle-sidebar {
+            position: fixed;
+            left: 1.25rem;
+            top: 1.25rem;
+            z-index: 999;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.875rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+        
+        .toggle-sidebar:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .toggle-sidebar:active {
+            transform: scale(0.95);
+        }
+        
+        /* Botão de Voz - Animação quando gravando */
+        #voz-btn.gravando {
+            animation: pulse 1.5s infinite;
+            background: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 6px 25px rgba(220, 38, 38, 0.7);
+            }
+        }
+        
+        /* Modal WhatsApp */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .main-content {
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 300px;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.visible {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .toggle-sidebar {
+                display: block;
+            }
+        }
+        
+        @media print {
+            .sidebar, .toggle-sidebar {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans min-h-screen">
+
+    <!-- Botão Toggle Menu Lateral -->
+    <button class="toggle-sidebar no-print" id="toggle-sidebar" title="Abrir/Fechar Menu">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </button>
+
+    <!-- Menu Lateral -->
+    <aside class="sidebar no-print" id="sidebar">
+        <!-- Cabeçalho do Menu -->
+        <div class="sidebar-header">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+            </svg>
+            Caderno IA
+        </div>
+        
+        <!-- Seção: Cadernos -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Meus Cadernos</div>
+            <select id="caderno-selector-sidebar" class="sidebar-select" title="Selecionar caderno" aria-label="Selecionar caderno">
+                <!-- Opções carregadas via JS -->
+            </select>
+            
+            <button id="novo-caderno-btn-sidebar" class="sidebar-btn" title="Criar novo caderno">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Novo Caderno
+            </button>
+            
+            <button id="nova-pagina-btn-sidebar" class="sidebar-btn" title="Criar nova página">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+                    <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                </svg>
+                Nova Página
+            </button>
+            
+            <button id="deletar-caderno-btn-sidebar" class="sidebar-btn" title="Deletar caderno atual">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                Deletar Caderno
+            </button>
+        </div>
+        
+        <!-- Seção: Fonte -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Estilo da Fonte</div>
+            <select id="font-selector-sidebar" class="sidebar-select" title="Selecionar fonte">
+                <option value="font-kalam" class="font-kalam">Kalam</option>
+                <option value="font-patrick" class="font-patrick">Patrick Hand</option>
+                <option value="font-dancing" class="font-dancing">Dancing Script</option>
+                <option value="font-caveat" class="font-caveat">Caveat</option>
+                <option value="font-arial" class="font-arial">Arial</option>
+                <option value="font-times" class="font-times">Times New Roman</option>
+            </select>
+        </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-content" id="main-content">
+        <div class="flex flex-col items-center justify-center p-4 md:p-8">
+
+    <!-- O "Caderno" -->
+    <div class="w-full max-w-5xl bg-white shadow-2xl rounded-2xl overflow-hidden book-container">
+        <!-- Cabeçalho da Folha -->
+        <div class="cabecalho-caderno">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Data:</label>
+                    <input type="date" 
+                           id="campo-data" 
+                           class="campo-cabecalho font-kalam"
+                           aria-label="Data da aula">
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Matéria:</label>
+                    <input type="text" 
+                           id="campo-materia" 
+                           class="campo-cabecalho font-kalam" 
+                           placeholder="Ex: Matemática"
+                           maxlength="100"
+                           aria-label="Nome da matéria">
+                </div>
+            </div>
+        </div>
+        
+        <div id="pagina-caderno" 
+             contenteditable="true" 
+             spellcheck="true"
+             class="font-kalam page" 
+             role="textbox" 
+             aria-multiline="true"
+             title="Área de escrita do caderno">
+            <!-- Comece a digitar aqui... -->
+            Olá! Este é o seu caderno digital.<br>
+            Você pode começar a digitar aqui. Tente escrever algo erado para ver o corretor ortográfico em ação.<br>
+            Use o menu acima para mudar o estilo da sua "caneta"!<br><br>
+            Escreva um texto longo aqui e depois clique no botão "Continuar com IA" para ver a IA continuar seu texto.
+        </div>
+    </div>
+    
+    <!-- Botões Flutuantes de Ação -->
+    <div class="fixed bottom-8 right-8 flex flex-col gap-3 z-50 no-print">
+        <button id="voz-btn" 
+                class="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95"
+                title="Ditado por Voz"
+                aria-label="Ditado por Voz">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" />
+            </svg>
+        </button>
+        
+        <button id="analisar-ia-btn" 
+                class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95"
+                title="Continuar texto com IA"
+                aria-label="Continuar texto com IA">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.91.5.5 0 00.454.09A5 5 0 0010 11z" clip-rule="evenodd" />
+            </svg>
+        </button>
+        
+        <button id="exportar-pdf-btn" 
+                class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95"
+                title="Exportar para PDF"
+                aria-label="Exportar para PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </button>
+        
+        <button id="whatsapp-btn" 
+                class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95"
+                title="Enviar para WhatsApp"
+                aria-label="Enviar para WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Modal WhatsApp -->
+    <div id="modal-whatsapp" class="modal-overlay no-print">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Enviar para WhatsApp
+            </h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Resumo (máx. 500 caracteres)</label>
+                <textarea id="whatsapp-resumo" 
+                          class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none resize-none"
+                          rows="4"
+                          maxlength="500"
+                          placeholder="Digite um resumo do conteúdo..."></textarea>
+                <div class="text-right text-sm text-gray-500 mt-1">
+                    <span id="char-count">0</span>/500
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Número do WhatsApp</label>
+                <div class="flex gap-2">
+                    <input type="text" 
+                           value="+55" 
+                           disabled
+                           class="w-16 p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-center font-semibold">
+                    <input type="text" 
+                           id="whatsapp-ddd" 
+                           class="w-20 p-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none text-center"
+                           placeholder="DDD"
+                           maxlength="2"
+                           pattern="[0-9]*">
+                    <input type="text" 
+                           id="whatsapp-numero" 
+                           class="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+                           placeholder="Número (9 dígitos)"
+                           maxlength="9"
+                           pattern="[0-9]*">
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="whatsapp-cancelar" 
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all">
+                    Cancelar
+                </button>
+                <button id="whatsapp-enviar" 
+                        class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all shadow-lg">
+                    Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    </div> <!-- Fecha main-content -->
+
+    <script>
+        // ==============================================
+        // GERENCIADOR DE CADERNOS E LOCALSTORAGE
+        // ==============================================
+        
+        class GerenciadorCadernos {
+            constructor() {
+                this.cadernoAtual = null;
+                this.autoSaveInterval = null;
+                this.carregarCadernos();
+            }
+            
+            carregarCadernos() {
+                const cadernos = localStorage.getItem('cadernos');
+                if (!cadernos) {
+                    // Criar caderno padrão
+                    const cadernosPadrao = {
+                        'caderno-1': {
+                            id: 'caderno-1',
+                            nome: 'Meu Primeiro Caderno',
+                            data: new Date().toISOString().split('T')[0],
+                            materia: '',
+                            conteudo: 'Olá! Este é o seu caderno digital.<br>Você pode começar a digitar aqui. Tente escrever algo erado para ver o corretor ortográfico em ação.<br>Use o menu acima para mudar o estilo da sua "caneta"!<br><br>Escreva um texto longo aqui e depois clique no botão "Continuar com IA" para ver a IA continuar seu texto.',
+                            fonte: 'font-kalam',
+                            criadoEm: Date.now(),
+                            atualizadoEm: Date.now()
+                        }
+                    };
+                    localStorage.setItem('cadernos', JSON.stringify(cadernosPadrao));
+                    this.cadernoAtual = 'caderno-1';
+                } else {
+                    const cadernosObj = JSON.parse(cadernos);
+                    const ultimoCaderno = localStorage.getItem('ultimoCaderno');
+                    this.cadernoAtual = ultimoCaderno && cadernosObj[ultimoCaderno] ? ultimoCaderno : Object.keys(cadernosObj)[0];
+                }
+                this.atualizarSelectorCadernos();
+                this.carregarCadernoAtual();
+                this.iniciarAutoSave();
+            }
+            
+            obterCadernos() {
+                return JSON.parse(localStorage.getItem('cadernos') || '{}');
+            }
+            
+            salvarCadernos(cadernos) {
+                localStorage.setItem('cadernos', JSON.stringify(cadernos));
+            }
+            
+            atualizarSelectorCadernos() {
+                const selectorSidebar = document.getElementById('caderno-selector-sidebar');
+                const cadernos = this.obterCadernos();
+                
+                if (selectorSidebar) selectorSidebar.innerHTML = '';
+                
+                Object.values(cadernos)
+                    .sort((a, b) => b.atualizadoEm - a.atualizadoEm)
+                    .forEach(caderno => {
+                        if (selectorSidebar) {
+                            const option = document.createElement('option');
+                            option.value = caderno.id;
+                            option.textContent = caderno.nome;
+                            if (caderno.id === this.cadernoAtual) {
+                                option.selected = true;
+                            }
+                            selectorSidebar.appendChild(option);
+                        }
+                    });
+            }
+            
+            carregarCadernoAtual() {
+                const cadernos = this.obterCadernos();
+                const caderno = cadernos[this.cadernoAtual];
+                
+                if (caderno) {
+                    document.getElementById('campo-data').value = caderno.data;
+                    document.getElementById('campo-materia').value = caderno.materia;
+                    document.getElementById('pagina-caderno').innerHTML = caderno.conteudo;
+                    
+                    const paginaDoCaderno = document.getElementById('pagina-caderno');
+                    const classesDeFonte = ['font-arial', 'font-times', 'font-kalam', 'font-patrick', 'font-dancing', 'font-caveat'];
+                    paginaDoCaderno.classList.remove(...classesDeFonte);
+                    paginaDoCaderno.classList.add(caderno.fonte);
+                    
+                    // Sincronizar seletor de fonte
+                    const fontSelectorSidebar = document.getElementById('font-selector-sidebar');
+                    if (fontSelectorSidebar) fontSelectorSidebar.value = caderno.fonte;
+                    
+                    // Sincronizar fonte do cabeçalho
+                    document.getElementById('campo-data').className = 'campo-cabecalho ' + caderno.fonte;
+                    document.getElementById('campo-materia').className = 'campo-cabecalho ' + caderno.fonte;
+                    
+                    localStorage.setItem('ultimoCaderno', this.cadernoAtual);
+                }
+            }
+            
+            salvarCadernoAtual() {
+                const cadernos = this.obterCadernos();
+                if (cadernos[this.cadernoAtual]) {
+                    cadernos[this.cadernoAtual].data = document.getElementById('campo-data').value;
+                    cadernos[this.cadernoAtual].materia = document.getElementById('campo-materia').value;
+                    cadernos[this.cadernoAtual].conteudo = document.getElementById('pagina-caderno').innerHTML;
+                    const fontSelector = document.getElementById('font-selector-sidebar');
+                    cadernos[this.cadernoAtual].fonte = fontSelector ? fontSelector.value : 'font-kalam';
+                    cadernos[this.cadernoAtual].atualizadoEm = Date.now();
+                    this.salvarCadernos(cadernos);
+                }
+            }
+            
+            novoCaderno() {
+                const nome = prompt('Nome do novo caderno:', 'Caderno ' + (Object.keys(this.obterCadernos()).length + 1));
+                if (!nome) return;
+                
+                const id = 'caderno-' + Date.now();
+                const cadernos = this.obterCadernos();
+                
+                cadernos[id] = {
+                    id: id,
+                    nome: nome,
+                    data: new Date().toISOString().split('T')[0],
+                    materia: '',
+                    conteudo: 'Comece a escrever aqui...<br>',
+                    fonte: 'font-kalam',
+                    criadoEm: Date.now(),
+                    atualizadoEm: Date.now()
+                };
+                
+                this.salvarCadernos(cadernos);
+                this.cadernoAtual = id;
+                this.atualizarSelectorCadernos();
+                this.carregarCadernoAtual();
+                
+                // Efeito visual
+                tocarSomPagina();
+            }
+            
+            deletarCaderno() {
+                const cadernos = this.obterCadernos();
+                if (Object.keys(cadernos).length <= 1) {
+                    alert('Você precisa ter pelo menos um caderno!');
+                    return;
+                }
+                
+                const caderno = cadernos[this.cadernoAtual];
+                if (confirm(`Tem certeza que deseja deletar "${caderno.nome}"?`)) {
+                    delete cadernos[this.cadernoAtual];
+                    this.salvarCadernos(cadernos);
+                    
+                    this.cadernoAtual = Object.keys(cadernos)[0];
+                    this.atualizarSelectorCadernos();
+                    this.carregarCadernoAtual();
+                }
+            }
+            
+            trocarCaderno(novoId) {
+                this.salvarCadernoAtual();
+                this.cadernoAtual = novoId;
+                this.carregarCadernoAtual();
+                
+                // Efeito 3D ao trocar
+                const paginaDoCaderno = document.getElementById('pagina-caderno');
+                paginaDoCaderno.classList.add('flipping');
+                tocarSomPagina();
+                setTimeout(() => {
+                    paginaDoCaderno.classList.remove('flipping');
+                }, 800);
+            }
+            
+            iniciarAutoSave() {
+                // Auto-save a cada 10 segundos
+                this.autoSaveInterval = setInterval(() => {
+                    this.salvarCadernoAtual();
+                }, 10000);
+                
+                // Salvar antes de fechar a página
+                window.addEventListener('beforeunload', () => {
+                    this.salvarCadernoAtual();
+                });
+                
+                // Salvar em eventos importantes
+                document.getElementById('pagina-caderno').addEventListener('blur', () => {
+                    this.salvarCadernoAtual();
+                });
+                
+                document.getElementById('campo-data').addEventListener('change', () => {
+                    this.salvarCadernoAtual();
+                });
+                
+                document.getElementById('campo-materia').addEventListener('change', () => {
+                    this.salvarCadernoAtual();
+                });
+            }
+        }
+        
+        // ==============================================
+        // SOM DE VIRAR PÁGINA
+        // ==============================================
+        
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function tocarSomPagina() {
+            // Cria um som sintético de papel sendo virado
+            const now = audioContext.currentTime;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Som de papel: frequência baixa com ruído
+            oscillator.frequency.setValueAtTime(100, now);
+            oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+            oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+            oscillator.type = 'sawtooth';
+            
+            // Envelope de volume
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.15, now + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.4);
+        }
+
+        // ==============================================
+        // INICIALIZAÇÃO E LÓGICA PRINCIPAL
+        // ==============================================
+        
+        const gerenciador = new GerenciadorCadernos();
+        
+        const paginaDoCaderno = document.getElementById('pagina-caderno');
+        const campoData = document.getElementById('campo-data');
+        const campoMateria = document.getElementById('campo-materia');
+        const classesDeFonte = ['font-arial', 'font-times', 'font-kalam', 'font-patrick', 'font-dancing', 'font-caveat'];
+        
+        // Função para sanitizar entrada de texto
+        function sanitizarTexto(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto;
+            return div.innerHTML;
+        }
+        
+        // Sanitizar entrada do campo de matéria
+        campoMateria.addEventListener('input', (e) => {
+            const valorOriginal = e.target.value;
+            const valorSanitizado = valorOriginal.replace(/<[^>]*>/g, '');
+            if (valorOriginal !== valorSanitizado) {
+                e.target.value = valorSanitizado;
+            }
+        });
+
+        // ==============================================
+        // LÓGICA DO MENU LATERAL
+        // ==============================================
+        
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const mainContent = document.getElementById('main-content');
+        
+        // Toggle menu lateral
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('visible');
+        });
+        
+        // Fechar menu ao clicar fora (mobile)
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 1024) {
+                if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    sidebar.classList.remove('visible');
+                }
+            }
+        });
+        
+        // Sincronizar seletores do sidebar com os principais
+        const cadernoSelectorSidebar = document.getElementById('caderno-selector-sidebar');
+        const fontSelectorSidebar = document.getElementById('font-selector-sidebar');
+        
+        // Sincronizar caderno selector
+        cadernoSelectorSidebar.addEventListener('change', (e) => {
+            gerenciador.trocarCaderno(e.target.value);
+        });
+        
+        // Sincronizar font selector
+        fontSelectorSidebar.addEventListener('change', (e) => {
+            const novaClasseDeFonte = e.target.value;
+            
+            campoData.className = 'campo-cabecalho ' + novaClasseDeFonte;
+            campoMateria.className = 'campo-cabecalho ' + novaClasseDeFonte;
+            
+            paginaDoCaderno.classList.remove(...classesDeFonte);
+            paginaDoCaderno.classList.add(novaClasseDeFonte);
+            
+            paginaDoCaderno.classList.add('flipping');
+            tocarSomPagina();
+            setTimeout(() => {
+                paginaDoCaderno.classList.remove('flipping');
+            }, 800);
+            
+            gerenciador.salvarCadernoAtual();
+        });
+        
+        // Botões do sidebar
+        document.getElementById('novo-caderno-btn-sidebar').addEventListener('click', () => {
+            gerenciador.novoCaderno();
+            if (window.innerWidth <= 1024) sidebar.classList.remove('visible');
+        });
+        
+        document.getElementById('nova-pagina-btn-sidebar').addEventListener('click', () => {
+            if (confirm('Deseja criar uma nova página? O conteúdo atual será salvo no caderno.')) {
+                gerenciador.salvarCadernoAtual();
+                
+                paginaDoCaderno.innerHTML = 'Comece a escrever aqui...<br>';
+                campoData.value = new Date().toISOString().split('T')[0];
+                campoMateria.value = '';
+                
+                paginaDoCaderno.classList.add('flipping');
+                tocarSomPagina();
+                setTimeout(() => {
+                    paginaDoCaderno.classList.remove('flipping');
+                    paginaDoCaderno.focus();
+                }, 800);
+                
+                if (window.innerWidth <= 1024) sidebar.classList.remove('visible');
+            }
+        });
+        
+        document.getElementById('deletar-caderno-btn-sidebar').addEventListener('click', () => {
+            gerenciador.deletarCaderno();
+            if (window.innerWidth <= 1024) sidebar.classList.remove('visible');
+        });
+
+        // --- Exportar PDF ---
+        const exportarPdfBtn = document.getElementById('exportar-pdf-btn');
+        
+        exportarPdfBtn.addEventListener('click', async () => {
+            const originalText = exportarPdfBtn.innerHTML;
+            exportarPdfBtn.disabled = true;
+            exportarPdfBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Gerando PDF...';
+            
+            try {
+                // Cria um container com cabeçalho e conteúdo
+                const container = document.createElement('div');
+                container.style.backgroundColor = '#fffde7';
+                container.style.padding = '20px';
+                
+                // Adiciona cabeçalho ao PDF
+                const cabecalho = document.createElement('div');
+                cabecalho.style.marginBottom = '20px';
+                cabecalho.style.paddingBottom = '10px';
+                cabecalho.style.borderBottom = '2px solid #a5b4fc';
+                cabecalho.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                        <div><strong>Data:</strong> ${campoData.value ? new Date(campoData.value + 'T00:00:00').toLocaleDateString('pt-BR') : '_____________'}</div>
+                        <div><strong>Matéria:</strong> ${sanitizarTexto(campoMateria.value) || '_____________'}</div>
+                    </div>
+                `;
+                container.appendChild(cabecalho);
+                
+                const elemento = paginaDoCaderno.cloneNode(true);
+                elemento.contentEditable = false;
+                container.appendChild(elemento);
+                
+                // Nome do arquivo com data e matéria
+                const nomeMateria = campoMateria.value ? campoMateria.value.replace(/[^a-zA-Z0-9]/g, '_') : 'caderno';
+                const dataFormatada = campoData.value ? campoData.value : new Date().toISOString().split('T')[0];
+                const nomeArquivo = `${nomeMateria}_${dataFormatada}.pdf`;
+                
+                const opt = {
+                    margin: 0.5,
+                    filename: nomeArquivo,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+                
+                await html2pdf().set(opt).from(container).save();
+                
+                // Som e efeito ao exportar
+                tocarSomPagina();
+            } catch (error) {
+                console.error('Erro ao exportar PDF:', error);
+                alert('Erro ao exportar PDF. Por favor, tente novamente.');
+            } finally {
+                exportarPdfBtn.disabled = false;
+                exportarPdfBtn.innerHTML = originalText;
+            }
+        });
+
+        // --- Lógica do Modal e IA ---
+        const analisarBtn = document.getElementById('analisar-ia-btn');
+        const originalBtnHTML = analisarBtn.innerHTML; // Salva o HTML original do botão
+            
+        // Mostrar modal
+        analisarBtn.addEventListener('click', () => {
+            const textoDoCaderno = paginaDoCaderno.innerText;
+            chamarGeminiAPI(textoDoCaderno);
+        });
+
+        // Chamar a API Gemini
+        async function chamarGeminiAPI(texto) {
+            // Insira sua chave da API aqui
+            const apiKey = ""; // Cole sua chave do Google Gemini aqui
+            
+            if (!apiKey) {
+                alert('Por favor, insira sua chave da API do Google Gemini no código.\n\nObtenha em: https://makersuite.google.com/app/apikey');
+                analisarBtn.disabled = false;
+                analisarBtn.innerHTML = originalBtnHTML;
+                return;
+            }
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+
+            // Prepara o prompt
+            const promptDoUsuario = `Continue o texto a seguir em português, começando de onde ele parou. Não repita o texto original, apenas escreva a continuação. Texto:\n\n"${texto}"`;
+            
+            const payload = {
+                contents: [{ 
+                    parts: [{ text: promptDoUsuario }] 
+                }]
+            };
+
+            // Mostrar spinner no botão
+            analisarBtn.disabled = true;
+            analisarBtn.innerText = "Pensando...";
+
+            try {
+                // Implementa retentativa exponencial simples
+                let response;
+                let retries = 0;
+                const maxRetries = 3;
+                let delay = 1000;
+
+                while (retries < maxRetries) {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        break; // Sucesso
+                    }
+                    
+                    if (response.status === 429 || response.status >= 500) {
+                        // Erro de "Too Many Requests" ou erro de servidor
+                        retries++;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; // Dobra o tempo de espera
+                    } else {
+                        // Outro erro (ex: 400 Bad Request), não tentar novamente
+                        throw new Error(`Erro na API: ${response.statusText}`);
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error("Falha ao chamar a API após várias tentativas.");
+                }
+
+                const result = await response.json();
+                
+                // Extrai o texto da resposta
+                const textoGerado = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (textoGerado) {
+                    // Efeito 3D e som ANTES de adicionar o texto
+                    paginaDoCaderno.classList.add('flipping');
+                    tocarSomPagina();
+                    
+                    setTimeout(() => {
+                        paginaDoCaderno.classList.remove('flipping');
+                        
+                        // Formata o texto com quebras de linha (substitui \n por <br>)
+                        const textoFormatado = textoGerado.replace(/\n/g, '<br>');
+                        // Adiciona a continuação da IA na página:
+                        // - Em vermelho e itálico
+                        // - Com fonte menor (text-lg)
+                        // - Entre aspas (usando &ldquo; e &rdquo; para aspas curvas)
+                        paginaDoCaderno.innerHTML += `<br><span class="text-red-700 italic text-lg">&ldquo;${textoFormatado}&rdquo;</span>`;
+                    }, 800);
+                } else {
+                    // Se não houver texto, apenas loga no console
+                    console.error("Desculpe, a IA não conseguiu gerar uma resposta.");
+                }
+
+            } catch (error) {
+                console.error("Erro ao chamar a API Gemini:", error);
+            } finally {
+                // Restaura o botão em qualquer caso (sucesso ou erro)
+                analisarBtn.disabled = false;
+                analisarBtn.innerHTML = originalBtnHTML;
+            }
+        }
+        
+        // ==============================================
+        // RECONHECIMENTO DE VOZ (WEB SPEECH API)
+        // ==============================================
+        
+        const vozBtn = document.getElementById('voz-btn');
+        let reconhecimento = null;
+        let estaGravando = false;
+        
+        // Verifica se o navegador suporta reconhecimento de voz
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            reconhecimento = new SpeechRecognition();
+            
+            // Configurações
+            reconhecimento.lang = 'pt-BR';
+            reconhecimento.continuous = true; // Continua ouvindo
+            reconhecimento.interimResults = true; // Mostra resultados parciais
+            
+            // Quando reconhece algo
+            reconhecimento.onresult = (event) => {
+                let transcricaoFinal = '';
+                let transcricaoTemporaria = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcricao = event.results[i][0].transcript;
+                    
+                    if (event.results[i].isFinal) {
+                        transcricaoFinal += transcricao + ' ';
+                    } else {
+                        transcricaoTemporaria += transcricao;
+                    }
+                }
+                
+                // Adiciona o texto final ao caderno
+                if (transcricaoFinal) {
+                    const textoAtual = paginaDoCaderno.innerHTML;
+                    paginaDoCaderno.innerHTML = textoAtual + transcricaoFinal;
+                    gerenciador.salvarCadernoAtual();
+                }
+            };
+            
+            // Quando para de reconhecer
+            reconhecimento.onend = () => {
+                if (estaGravando) {
+                    reconhecimento.start(); // Reinicia automaticamente
+                }
+            };
+            
+            // Em caso de erro
+            reconhecimento.onerror = (event) => {
+                console.error('Erro no reconhecimento de voz:', event.error);
+                if (event.error === 'no-speech') {
+                    // Sem fala detectada, continua ouvindo
+                    return;
+                }
+                pararGravacao();
+            };
+            
+            // Função para iniciar gravação
+            function iniciarGravacao() {
+                estaGravando = true;
+                vozBtn.classList.add('gravando');
+                vozBtn.title = 'Gravando... (clique para parar)';
+                reconhecimento.start();
+            }
+            
+            // Função para parar gravação
+            function pararGravacao() {
+                estaGravando = false;
+                vozBtn.classList.remove('gravando');
+                vozBtn.title = 'Ditado por Voz';
+                reconhecimento.stop();
+            }
+            
+            // Evento de clique no botão
+            vozBtn.addEventListener('click', () => {
+                if (estaGravando) {
+                    pararGravacao();
+                } else {
+                    iniciarGravacao();
+                }
+            });
+            
+        } else {
+            // Navegador não suporta
+            vozBtn.addEventListener('click', () => {
+                alert('Seu navegador não suporta reconhecimento de voz. Use Chrome, Edge ou Safari.');
+            });
+        }
+        
+        // ==============================================
+        // MODAL WHATSAPP
+        // ==============================================
+        
+        const whatsappBtn = document.getElementById('whatsapp-btn');
+        const modalWhatsapp = document.getElementById('modal-whatsapp');
+        const whatsappCancelar = document.getElementById('whatsapp-cancelar');
+        const whatsappEnviar = document.getElementById('whatsapp-enviar');
+        const whatsappResumo = document.getElementById('whatsapp-resumo');
+        const whatsappDDD = document.getElementById('whatsapp-ddd');
+        const whatsappNumero = document.getElementById('whatsapp-numero');
+        const charCount = document.getElementById('char-count');
+        
+        // Contador de caracteres
+        whatsappResumo.addEventListener('input', () => {
+            charCount.textContent = whatsappResumo.value.length;
+        });
+        
+        // Apenas números nos campos
+        whatsappDDD.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+        
+        whatsappNumero.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+        
+        // Abrir modal
+        whatsappBtn.addEventListener('click', () => {
+            modalWhatsapp.classList.add('active');
+            whatsappResumo.value = '';
+            whatsappDDD.value = '';
+            whatsappNumero.value = '';
+            charCount.textContent = '0';
+        });
+        
+        // Fechar modal
+        whatsappCancelar.addEventListener('click', () => {
+            modalWhatsapp.classList.remove('active');
+        });
+        
+        // Fechar ao clicar fora
+        modalWhatsapp.addEventListener('click', (e) => {
+            if (e.target === modalWhatsapp) {
+                modalWhatsapp.classList.remove('active');
+            }
+        });
+        
+        // Enviar para WhatsApp
+        whatsappEnviar.addEventListener('click', () => {
+            const resumo = whatsappResumo.value.trim();
+            const ddd = whatsappDDD.value.trim();
+            const numero = whatsappNumero.value.trim();
+            
+            // Validações
+            if (!resumo) {
+                alert('Por favor, digite um resumo.');
+                whatsappResumo.focus();
+                return;
+            }
+            
+            if (ddd.length !== 2) {
+                alert('DDD deve ter 2 dígitos.');
+                whatsappDDD.focus();
+                return;
+            }
+            
+            if (numero.length !== 9) {
+                alert('Número deve ter 9 dígitos.');
+                whatsappNumero.focus();
+                return;
+            }
+            
+            // Monta a mensagem
+            const telefone = `55${ddd}${numero}`;
+            const mensagem = encodeURIComponent(`📝 *Resumo do Caderno Digital*\n\n${resumo}\n\n_Enviado via Caderno IA_`);
+            const urlWhatsApp = `https://wa.me/${telefone}?text=${mensagem}`;
+            
+            // Abre o WhatsApp
+            window.open(urlWhatsApp, '_blank');
+            
+            // Fecha o modal
+            modalWhatsapp.classList.remove('active');
+        });
+        
+        // ==============================================
+        // REGISTRO DO SERVICE WORKER (PWA)
+        // ==============================================
+        
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado com sucesso:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
