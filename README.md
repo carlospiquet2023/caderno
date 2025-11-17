@@ -1,5 +1,14 @@
 # 📓 Caderno Digital com IA
 
+## 👨‍💻 Desenvolvedor
+
+**Carlos Antonio de Oliveira Piquet**  
+📧 E-mail: carlospiquet.projetos@gmail.com  
+🎓 Especialista em Inteligência Artificial e Redes de Computadores  
+🔗 GitHub: [@carlospiquet2023](https://github.com/carlospiquet2023)
+
+---
+
 ## 🚀 Projeto Completo e Pronto para Venda
 
 Um caderno digital moderno e inteligente com continuação de textos via IA, sistema de múltiplos cadernos, salvamento automático e funcionalidade PWA para instalação como aplicativo.
@@ -259,12 +268,32 @@ Este projeto está pronto para comercialização. Você pode:
 
 ---
 
-## 📞 Suporte
+## 📞 Contato e Suporte
 
-Para dúvidas ou personalizações:
-- Documentação no código está completa
-- Todos os métodos têm comentários explicativos
-- Estrutura modular facilita manutenção
+**Desenvolvedor:** Carlos Antonio de Oliveira Piquet  
+**E-mail:** carlospiquet.projetos@gmail.com  
+**Especialização:** Inteligência Artificial e Redes de Computadores  
+
+Para dúvidas, personalizações ou parcerias comerciais, entre em contato!
+
+---
+
+## 📄 Licença
+
+MIT License - Copyright (c) 2025 Carlos Antonio de Oliveira Piquet
+
+Este projeto é fornecido sob a Licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+**Atribuição obrigatória:** Qualquer uso, modificação ou distribuição deve manter os créditos ao desenvolvedor original.
+
+---
+
+## 🙏 Créditos
+
+**Desenvolvimento:** Carlos Antonio de Oliveira Piquet  
+**Tecnologias:** HTML5, CSS3, JavaScript, Tailwind CSS, Google Gemini API, Web Speech API  
+**Ano:** 2025  
+**Versão:** 1.0.0  
 
 ---
 
