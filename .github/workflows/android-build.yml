@@ -39,8 +39,9 @@ jobs:
 
       - name: Install dependencies & build web
         run: |
-          npm ci
-          npm run build
+          set -x
+          npm ci --verbose 2>&1 | tee npm-install.log
+          npm run build 2>&1 | tee npm-build.log
 
       - name: Install Capacitor CLI and packages
         run: |
@@ -68,6 +69,15 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease -PciBuild=true
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            npm-install.log
+            npm-build.log
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
